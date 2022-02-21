@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LinkShortener.Core.Infrastructure.MediatR.CommandHandlers.Product;
+using LinkShortener.Core.Infrastructure.MediatR.Commands.LinkCommands;
 using LinkShortener.Models.Common;
 using LinkShortener.Models.LinkModels;
 using MediatR;
@@ -27,13 +29,22 @@ namespace LinkShortener.Controllers
         [Route(nameof(AddLink))]
         [ProducesResponseType(typeof(ResponseModel<LinkModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ResponseModel<BadRequestModel>), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddLink(CreateProductCommand command)
+        public async Task<IActionResult> AddLink(RequestModel<LinkModel> request,
+            CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Hello, world!");
-            return Ok(await _mediator.Send(command));
+            var result = await _mediator.Send(new CreateLinkCommand(request.Params), cancellationToken);
+            return result.Match(
+                model => Ok(new ResponseModel<LinkModel>(model)) as IActionResult,
+                error =>
+                {
+                    _logger.LogError(error.ErrorMessage);
+                    return BadRequest(new ResponseModel<BadRequestModel>(error));
+                });
         }
         
         [HttpGet]
+        [Route(nameof(GetAll))]
+        [ProducesResponseType(typeof(ResponseModel<GetRecordsResponse<LinkModel>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             
