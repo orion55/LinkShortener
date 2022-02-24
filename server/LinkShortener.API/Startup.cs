@@ -1,6 +1,8 @@
 using System;
+using LinkShortener.Core.Infrastructure;
 using LinkShortener.Core.Infrastructure.MediatR;
 using LinkShortener.Core.Infrastructure.Middlewares;
+using LinkShortener.Core.Services.DbInitializer;
 using LinkShortener.Db.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -28,6 +30,8 @@ namespace LinkShortener
         
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.InitializeDatabaseAsync().Wait();
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -55,6 +59,7 @@ namespace LinkShortener
                 options.EnableSensitiveDataLogging(_webHostEnvironment.IsDevelopment());
             }, ServiceLifetime.Transient);
             
+            services.AddTransient<IDbInitializerService, DbInitializerService>();
             services.AddMediatR(typeof(DummyCommand));
             services.AddControllers();
             services.AddSwaggerGen(c =>
